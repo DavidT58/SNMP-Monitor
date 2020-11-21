@@ -6,6 +6,6 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/home/korisnik/Desktop/ireasoningsnmp.jar"/>
+	<classpathentry kind="lib" path="/home/korisnik/iReasoningSnmpV3/ireasoning/snmpv3/lib/ireasoningsnmp.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
