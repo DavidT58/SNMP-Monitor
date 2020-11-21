@@ -26,9 +26,6 @@ public class BGPTable {
 	public static void main(String[] args) throws IOException {
 		BGPTable table = new BGPTable("192.168.30.1");
 		System.out.println(table.getLocalPreferenceAttribute()[0]);
-		
-		
-
 	}
 	
 }
