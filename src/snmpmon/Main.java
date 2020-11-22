@@ -20,7 +20,7 @@ public class Main {
 			System.out.println(ipAddress + " LP: " + val + " via " + ipAddressSource);
 		}
 		*/
-		
+		/*
 		for(int i = 0; i < 3; i++) {
 			SnmpDataType val = table.getINPackets(i+1).getFirstVarBind().getValue();
 			System.out.println("Number of IN packets on Router" + (i+1) + ": " + val);
@@ -35,5 +35,16 @@ public class Main {
 			SnmpDataType val = table.getGETRequests(i+1).getFirstVarBind().getValue();
 			System.out.println("Number of GET requests on Router" + (i+1) + ": " + val);
 		}
+		*/
+		for(int i = 0; i < 3; i++) {
+			table.testSET(i+1);
+		}
+		
+		for(int i = 0; i < 3; i++) {
+			SnmpDataType val = table.getSETRequests(i+1).getFirstVarBind().getValue();
+			System.out.println("Number of SET requests on Router" + (i+1) + ": " + val);
+		}
+		
+		
 	}
 }

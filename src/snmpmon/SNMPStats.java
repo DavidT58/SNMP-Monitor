@@ -76,6 +76,40 @@ public class SNMPStats {
 		return null;
 	}
 	
+	public SnmpPdu getSETRequests(int router) throws IOException{
+		switch(router) {
+		case 1:
+			return sessionR1.snmpGetRequest(".1.3.6.1.2.1.11.17.0");
+		case 2:
+			return sessionR2.snmpGetRequest(".1.3.6.1.2.1.11.17.0");
+		case 3:
+			return sessionR3.snmpGetRequest(".1.3.6.1.2.1.11.17.0");
+		default:
+			System.out.println("Invalid router number");
+			break;
+		}
+		return null;
+	}
+	
+	public void testSET(int router) throws IOException{
+		SnmpVarBind a = null;
+		switch(router) {
+		case 1:
+			
+			sessionR1.snmpSetRequest(a);
+			return;
+		case 2:
+			sessionR2.snmpSetRequest(a);
+			return;
+		case 3:
+			sessionR3.snmpSetRequest(a);
+			return;
+		default:
+			System.out.println("Invalid router number");
+			break;
+		}
+	}
+	
 	public SnmpDataType getIN(int router) throws IOException{
 		
 		return sessionR3.snmpGetTableColumn(".1.3.6.1.2.1.11.1")[0].getValue();
