@@ -1,0 +1,66 @@
+! community se salje ruteru kao naredba koji LP da primeni na tu rutu
+
+
+https://www.cisco.com/c/en/us/support/docs/ip/border-gateway-protocol-bgp/28784-bgp-community.html
+
+
+! R1
+
+conf t
+ip bgp-community new-format
+
+router bgp 1
+neighbor 192.168.13.3 send-community ! obavezno
+neighbor 192.168.13.3 route-map R3 out
+ex
+
+access-list 101 permit ip host 192.168.10.0 host 255.255.255.0
+
+route-map R3 permit 10
+match ip address 101
+set community 3:200
+ex
+
+
+
+! R3
+
+conf t
+
+ip bgp-community new-format
+ip community-list 1 permit 3:50 ! LP na 50
+ip community-list 2 permit 3:200 ! LP na 200
+
+router bgp 3
+neighbor 192.168.13.1 route-map R1 in
+neighbor 192.168.23.2 route-map R2 in
+
+route-map R1 permit 10
+match community 1
+set local-preference 50
+
+route-map R1 permit 20
+match community 2
+set local-preference 200
+
+route-map R1 permit 25
+set local-preference 100
+
+route-map R2 permit 25
+set local-preference 150
+
+route-map R2 permit 10
+match community 1
+set local-preference 50
+
+route-map R2 permit 20
+match community 2
+set local-preference 200
+
+
+
+
+
+
+
+
