@@ -6,10 +6,7 @@
 			<attribute name="module" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/home/korisnik/iReasoningSnmpV3/ireasoning/snmpv3/lib/ireasoningsnmp.jar">
-		<attributes>
-			<attribute name="javadoc_location" value="http://www.ireasoning.com/javadocs/"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="lib" path="/home/korisnik/eclipse-workspace/SNMP-Monitor/jfreechart-1.5.1.jar"/>
+	<classpathentry kind="lib" path="/home/korisnik/eclipse-workspace/SNMP-Monitor/ireasoningsnmp.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
