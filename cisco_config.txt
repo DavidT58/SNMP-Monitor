@@ -7,6 +7,11 @@ https://www.cisco.com/c/en/us/support/docs/ip/border-gateway-protocol-bgp/28784-
 ! R1
 
 conf t
+
+snmp-server enable traps bgp
+snmp-server enable traps config
+snmp-server host 192.168.122.1 version 2c si2019 bgp config snmp
+
 ip bgp-community new-format
 
 router bgp 1
@@ -21,11 +26,21 @@ match ip address 101
 set community 3:200
 ex
 
+! R2
 
+conf t
+
+snmp-server enable traps bgp
+snmp-server enable traps config
+snmp-server host 192.168.122.1 version 2c si2019 bgp config snmp
 
 ! R3
 
 conf t
+
+snmp-server enable traps bgp
+snmp-server enable traps config
+snmp-server host 192.168.122.1 version 2c si2019 bgp config snmp
 
 ip bgp-community new-format
 ip community-list 1 permit 3:50 ! LP na 50
