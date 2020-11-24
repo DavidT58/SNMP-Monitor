@@ -8,8 +8,7 @@ https://www.cisco.com/c/en/us/support/docs/ip/border-gateway-protocol-bgp/28784-
 
 conf t
 
-snmp-server enable traps bgp
-snmp-server enable traps config
+snmp-server enable traps 
 snmp-server host 192.168.122.1 version 2c si2019 bgp config snmp
 
 ip bgp-community new-format
@@ -30,16 +29,17 @@ ex
 
 conf t
 
-snmp-server enable traps bgp
-snmp-server enable traps config
+
+snmp-server enable traps 
+snmp-server host 192.168.122.1 version 2c si2019 bgp config snmp
+
 snmp-server host 192.168.122.1 version 2c si2019 bgp config snmp
 
 ! R3
 
 conf t
 
-snmp-server enable traps bgp
-snmp-server enable traps config
+snmp-server enable traps 
 snmp-server host 192.168.122.1 version 2c si2019 bgp config snmp
 
 ip bgp-community new-format

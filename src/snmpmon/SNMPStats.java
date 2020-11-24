@@ -14,6 +14,7 @@ public class SNMPStats {
 	
 	
 	
+	
 	public SNMPStats(String ip1, String ip2, String ip3) throws IOException{
 		ipR1 = ip1;
 		ipR2 = ip2;
