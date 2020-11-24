@@ -1,6 +1,8 @@
 package snmpmon;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -11,20 +13,28 @@ import com.ireasoning.protocol.snmp.*;
 
 public class GUI extends Thread {
 	private JFrame frame;
-	private Panel centerPanel;
+	private Panel centerPanel, bottomPanel;
 	private Label lastUpdate;
 	private Label R1, R2, R3;
+	private Button sendSET;
 	private JTable table;
 	private DefaultTableModel model;
+	private JComboBox routerSelection;
 	private SNMPStats stats;
 	
 	public GUI() throws IOException{
 		frame = new JFrame("SNMP Monitor");
+		bottomPanel = new Panel();
+		
 		stats = new SNMPStats("192.168.10.1", "192.168.20.1", "192.168.30.1");
+		
 		model = new DefaultTableModel(4, 7);
 		table = new JTable(model);
-		setupTable();
 		
+		setupTable();
+		setupBottomPanel();
+		
+		frame.add(bottomPanel, BorderLayout.SOUTH);
 		frame.add(table);
 		
 		this.start();
@@ -33,6 +43,29 @@ public class GUI extends Thread {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(700, 300);
 		frame.setVisible(true);
+	}
+	
+	private void setupBottomPanel() {
+		String[] routers = {"R1", "R2", "R3"};
+		routerSelection = new JComboBox<String>(routers);
+		bottomPanel.add(routerSelection, BorderLayout.WEST);
+		sendSET = new Button("Send SET");
+		bottomPanel.add(sendSET);
+		
+		sendSET.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				int r = routerSelection.getSelectedIndex() + 1;
+				System.out.println("Izabran je: R" + r);
+				try {
+					stats.testSET(r);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 	
 	private void setupTable() {
@@ -48,7 +81,7 @@ public class GUI extends Thread {
 		model.setValueAt("BAD COMMUNITY", 0, 6);
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		table.setRowHeight(30);
-		
+		table.setDefaultEditor(Object.class, null);
 		
 	}
 	
@@ -56,7 +89,7 @@ public class GUI extends Thread {
 		try {
 			while(!isInterrupted()) {
 				updateValues();
-				table.repaint();
+				
 				Thread.sleep(5000);
 			}
 		} catch (InterruptedException e) {
@@ -92,6 +125,7 @@ public class GUI extends Thread {
 			model.setValueAt(stats.getNumTraps(i).getFirstVarBind().getValue(), i, 5);
 			model.setValueAt(stats.getNumBadCommunity(i).getFirstVarBind().getValue(), i, 6);
 			
+			table.repaint();
 		}
 	}
 	
