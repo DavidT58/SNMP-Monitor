@@ -1,35 +1,62 @@
 package snmpmon;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import com.ireasoning.protocol.snmp.*;
+
 
 public class SNMPStats {
 	
 	private SnmpSession sessionR1, sessionR2, sessionR3;
 	private SnmpTarget targetR1, targetR2, targetR3;
 	private int port;
-	private String ipR1, ipR2, ipR3, rdc, wrc;
-	
-	
-	
+	private String ipR1, ipR2, ipR3, com;
 	
 	public SNMPStats(String ip1, String ip2, String ip3) throws IOException{
 		ipR1 = ip1;
 		ipR2 = ip2;
 		ipR3 = ip3;
-		rdc = wrc = "si2019";
+		com = "si2019";
 		port = 161;
 		
-		targetR1 = new SnmpTarget(ipR1, port, rdc, wrc);
+		targetR1 = new SnmpTarget(ipR1, port, com, com);
 		sessionR1 = new SnmpSession(targetR1);
 		
-		targetR2 = new SnmpTarget(ipR2, port, rdc, wrc);
+		targetR2 = new SnmpTarget(ipR2, port, com, com);
 		sessionR2 = new SnmpSession(targetR2);
 		
-		targetR3 = new SnmpTarget(ipR3, port, rdc, wrc);
+		targetR3 = new SnmpTarget(ipR3, port, com, com);
 		sessionR3 = new SnmpSession(targetR3);
+		
+		
+	}
+	
+	public void sendBadCommunity(int r) throws IOException {
+		switch(r) {
+		case 1:
+			targetR1.setReadCommunity("random");
+			sessionR1 = new SnmpSession(targetR1);
+			sessionR1.asyncSnmpGetRequest(".1.3.6.1.2.1.11.1.0");
+			targetR1.setReadCommunity(com);
+			sessionR1 = new SnmpSession(targetR1);
+			break;
+		case 2:
+			targetR2.setReadCommunity("random");
+			sessionR2 = new SnmpSession(targetR2);
+			sessionR2.asyncSnmpGetRequest(".1.3.6.1.2.1.11.1.0");
+			targetR2.setReadCommunity(com);
+			sessionR2 = new SnmpSession(targetR2);
+			break;
+		case 3:
+			targetR3.setReadCommunity("random");
+			sessionR3 = new SnmpSession(targetR3);
+			sessionR3.asyncSnmpGetRequest(".1.3.6.1.2.1.11.1.0");
+			targetR3.setReadCommunity(com);
+			sessionR3 = new SnmpSession(targetR3);
+			break;
+		default:
+			System.out.println("Incorrect router number");
+		}
 	}
 	
 	public SnmpPdu getINPackets(int router) throws IOException{
@@ -112,7 +139,6 @@ public class SNMPStats {
 		SnmpVarBind a = null;
 		switch(router) {
 		case 1:
-			
 			sessionR1.snmpSetRequest(a);
 			return;
 		case 2:

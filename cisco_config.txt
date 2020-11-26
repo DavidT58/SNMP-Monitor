@@ -1,7 +1,7 @@
 ! community se salje ruteru kao naredba koji LP da primeni na tu rutu
 
 
-https://www.cisco.com/c/en/us/support/docs/ip/border-gateway-protocol-bgp/28784-bgp-community.html
+! https://www.cisco.com/c/en/us/support/docs/ip/border-gateway-protocol-bgp/28784-bgp-community.html
 
 
 ! R1
@@ -16,28 +16,26 @@ ip bgp-community new-format
 router bgp 1
 neighbor 192.168.13.3 send-community ! obavezno
 neighbor 192.168.13.3 route-map R3 out
-ex
+exit
 
 access-list 101 permit ip host 192.168.10.0 host 255.255.255.0
 
 route-map R3 permit 10
 match ip address 101
 set community 3:200
-ex
+exit
 
 ! R2
 
-conf t
+configure terminal
 
-
-snmp-server enable traps 
-snmp-server host 192.168.122.1 version 2c si2019 bgp config snmp
-
+snmp-server enable traps config
+snmp-server enable traps bgp 
 snmp-server host 192.168.122.1 version 2c si2019 bgp config snmp
 
 ! R3
 
-conf t
+configure terminal
 
 snmp-server enable traps 
 snmp-server host 192.168.122.1 version 2c si2019 bgp config snmp
@@ -49,29 +47,36 @@ ip community-list 2 permit 3:200 ! LP na 200
 router bgp 3
 neighbor 192.168.13.1 route-map R1 in
 neighbor 192.168.23.2 route-map R2 in
+exit
+
 
 route-map R1 permit 10
 match community 1
 set local-preference 50
+exit
 
 route-map R1 permit 20
 match community 2
 set local-preference 200
+exit
 
 route-map R1 permit 25
 set local-preference 100
+exit
 
 route-map R2 permit 25
 set local-preference 150
+exit
 
 route-map R2 permit 10
 match community 1
 set local-preference 50
+exit
 
 route-map R2 permit 20
 match community 2
 set local-preference 200
-
+exit
 
 
 

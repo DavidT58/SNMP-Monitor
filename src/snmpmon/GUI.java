@@ -15,27 +15,46 @@ public class GUI extends Thread {
 	private JFrame frame;
 	private Panel centerPanel, bottomPanel;
 	private Label lastUpdate;
-	private Label R1, R2, R3;
-	private Button sendSET;
-	private JTable table;
-	private DefaultTableModel model;
-	private JComboBox routerSelection;
-	private SNMPStats stats;
+	private Button sendSET, changeTable, sendBadCommunity;
+	private CardLayout cardLayout;
+	
+	
+	private JTable totalTable, currentTable;
+	private DefaultTableModel modelTotal, modelCurrent;
+	private JComboBox<String> routerSelection;
+	
+	SNMPStats stats;
+	
+	
+	private long oldValues[][], latestValues[][];
 	
 	public GUI() throws IOException{
 		frame = new JFrame("SNMP Monitor");
-		bottomPanel = new Panel();
+		bottomPanel = new Panel(new FlowLayout());
+		centerPanel = new Panel();
+		cardLayout = new CardLayout();
 		
 		stats = new SNMPStats("192.168.10.1", "192.168.20.1", "192.168.30.1");
 		
-		model = new DefaultTableModel(4, 7);
-		table = new JTable(model);
+		oldValues = new long[3][6];
+		latestValues = new long[3][6];
 		
-		setupTable();
+		// this model shows the overall total number of requests/traps/packets
+		modelTotal = new DefaultTableModel(4, 7); 
+		
+		// this model shows the data monitored over the selected time period (data/10s)
+		modelCurrent = new DefaultTableModel(4,7); 
+		
+		totalTable = new JTable(modelTotal);
+		currentTable = new JTable(modelCurrent);
+		
+		setupCurrentTable();
+		setupTotalTable();
+		setupCenterPanel();
 		setupBottomPanel();
 		
 		frame.add(bottomPanel, BorderLayout.SOUTH);
-		frame.add(table);
+		frame.add(centerPanel);
 		
 		this.start();
 		
@@ -45,89 +64,161 @@ public class GUI extends Thread {
 		frame.setVisible(true);
 	}
 	
+	private void setupCenterPanel() {
+		centerPanel.setLayout(cardLayout);
+		
+		Label currentLabel, totalLabel;
+		currentLabel = new Label ("current");
+		totalLabel = new Label("total");
+		
+		
+		Panel total = new Panel();
+		Panel current = new Panel();
+		total.add(totalTable);
+		current.add(currentTable);
+		total.add(totalLabel);
+		current.add(currentLabel);
+		
+		centerPanel.add(totalTable);
+		
+		centerPanel.add(currentTable);
+		
+	}
+	
 	private void setupBottomPanel() {
 		String[] routers = {"R1", "R2", "R3"};
 		routerSelection = new JComboBox<String>(routers);
 		bottomPanel.add(routerSelection, BorderLayout.WEST);
-		sendSET = new Button("Send SET");
-		bottomPanel.add(sendSET);
 		
-		sendSET.addActionListener(new ActionListener() {
+		sendSET = new Button("Send SET");
+		changeTable = new Button("Change Table");
+		sendBadCommunity = new Button("Send Bad Community");
+		
+		bottomPanel.add(sendSET);
+		bottomPanel.add(sendBadCommunity);
+		bottomPanel.add(changeTable, BorderLayout.EAST);
+		
+		sendBadCommunity.addActionListener((a) -> {
+			int r = routerSelection.getSelectedIndex() + 1;
+			try {
+				stats.sendBadCommunity(r);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-				int r = routerSelection.getSelectedIndex() + 1;
-				System.out.println("Izabran je: R" + r);
-				try {
-					stats.testSET(r);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+		});
+		
+		changeTable.addActionListener((a) -> { 
+			cardLayout.next(centerPanel);
+			
+		});
+		
+		sendSET.addActionListener((a) -> {
+			int r = routerSelection.getSelectedIndex() + 1;
+			try {
+				stats.testSET(r);
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		});
 	}
 	
-	private void setupTable() {
-		model.setValueAt("Router", 0, 0);
-		model.setValueAt("Router1", 1, 0);
-		model.setValueAt("Router2", 2, 0);
-		model.setValueAt("Router3", 3, 0);
-		model.setValueAt("In Packets", 0, 1);
-		model.setValueAt("Out Packets", 0, 2);
-		model.setValueAt("GET Requests", 0, 3);
-		model.setValueAt("SET Requests", 0, 4);
-		model.setValueAt("TRAPS", 0, 5);
-		model.setValueAt("BAD COMMUNITY", 0, 6);
-		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		table.setRowHeight(30);
-		table.setDefaultEditor(Object.class, null);
+	private void setupTotalTable() {
+		modelTotal.setValueAt("Router", 0, 0);
+		modelTotal.setValueAt("Router1", 1, 0);
+		modelTotal.setValueAt("Router2", 2, 0);
+		modelTotal.setValueAt("Router3", 3, 0);
+		modelTotal.setValueAt("In Packets", 0, 1);
+		modelTotal.setValueAt("Out Packets", 0, 2);
+		modelTotal.setValueAt("GET Requests", 0, 3);
+		modelTotal.setValueAt("SET Requests", 0, 4);
+		modelTotal.setValueAt("TRAPS", 0, 5);
+		modelTotal.setValueAt("BAD COMMUNITY", 0, 6);
+		
+		totalTable.setRowHeight(30);
+		totalTable.setDefaultEditor(Object.class, null);
 		
 	}
+	
+	
+	private void setupCurrentTable() {
+		currentTable.setRowHeight(30);
+		currentTable.setDefaultEditor(Object.class, null);
+		
+		modelCurrent.setValueAt("Router", 0, 0);
+		modelCurrent.setValueAt("Router1", 1, 0);
+		modelCurrent.setValueAt("Router2", 2, 0);
+		modelCurrent.setValueAt("Router3", 3, 0);
+		modelCurrent.setValueAt("In Packets", 0, 1);
+		modelCurrent.setValueAt("Out Packets", 0, 2);
+		modelCurrent.setValueAt("GET Requests", 0, 3);
+		modelCurrent.setValueAt("SET Requests", 0, 4);
+		modelCurrent.setValueAt("TRAPS", 0, 5);
+		modelCurrent.setValueAt("BAD COMMUNITY", 0, 6);
+	}
+	
 	
 	public void run() {
 		try {
 			while(!isInterrupted()) {
-				updateValues();
 				
-				Thread.sleep(5000);
+				updateValuesTotal();
+				
+				updateValuesCurrent();
+				
+				Thread.sleep(2000);
 			}
-		} catch (InterruptedException e) {
+		} catch (InterruptedException | IOException e) {
 			
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 		
+	}
+	
+	
+	/*
+	 * This method pulls the data over SNMP via GET requests and stores it 
+	 * into the latestValues matrix
+	 */
+	private void updateValuesTotal() throws IOException{
+		
+		for(int i = 1; i < 4; i++) {
+			modelTotal.setValueAt(stats.getINPackets(i).getFirstVarBind().getValue(), i, 1);
+			modelTotal.setValueAt(stats.getOUTPackets(i).getFirstVarBind().getValue(), i, 2);
+			
+			modelTotal.setValueAt(stats.getGETRequests(i).getFirstVarBind().getValue(), i, 3);
+			modelTotal.setValueAt(stats.getSETRequests(i).getFirstVarBind().getValue(), i, 4);
+			
+			modelTotal.setValueAt(stats.getNumTraps(i).getFirstVarBind().getValue(), i, 5);
+			modelTotal.setValueAt(stats.getNumBadCommunity(i).getFirstVarBind().getValue(), i, 6);
+			
+			totalTable.repaint();
+		}
+		
+		for(int i = 0; i < 3; i++) {
+			for(int j = 0; j < 6; j++)
+				latestValues[i][j] = ((SnmpCounter32)modelTotal.getValueAt(i+1, j+1)).getValue();
+			
+		}
 	}
 	
 	/*
-	for(int i = 0; i < 3; i++) {
-		table.testSET(i+1);
-	}
-	*/
-	
-	private void updateValues() throws IOException{
-		/*
-		for(int i = 0; i < 3; i++) {
-			SnmpDataType val = stats.getGETRequests(i+1).getFirstVarBind().getValue();
-			System.out.println("Number of GET requests on Router" + (i+1) + ": " + val);
-			model.setValueAt(val, i+1, 3);
-		}
-		*/
+	 * This method gets data from the latestValues matrix and shows how much has changed 
+	 * over selected time period (should be 10s by default)
+	 * 
+	 */
+	private void updateValuesCurrent() throws IOException {
 		
-		for(int i = 1; i < 4; i++) {
-			model.setValueAt(stats.getINPackets(i).getFirstVarBind().getValue(), i, 1);
-			model.setValueAt(stats.getOUTPackets(i).getFirstVarBind().getValue(), i, 2);
+		for(int i = 0; i < 3; i++) {
+			for(int j = 0; j < 6; j++)
+				modelCurrent.setValueAt((latestValues[i][j] - oldValues[i][j]), i+1, j+1);
 			
-			model.setValueAt(stats.getGETRequests(i).getFirstVarBind().getValue(), i, 3);
-			model.setValueAt(stats.getSETRequests(i).getFirstVarBind().getValue(), i, 4);
-			
-			model.setValueAt(stats.getNumTraps(i).getFirstVarBind().getValue(), i, 5);
-			model.setValueAt(stats.getNumBadCommunity(i).getFirstVarBind().getValue(), i, 6);
-			
-			table.repaint();
+			currentTable.repaint();
 		}
+		
+		for(int i = 0; i < 3; i++)
+			for(int j = 0; j < 6; j++)
+				oldValues[i][j] = latestValues[i][j];
 	}
-	
 	
 }
