@@ -4,6 +4,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
@@ -14,16 +17,18 @@ import com.ireasoning.protocol.snmp.*;
 public class GUI extends Thread {
 	private JFrame frame;
 	private Panel centerPanel, bottomPanel;
-	private Label lastUpdate;
+	private Label lastUpdate, currentLabel;
 	private Button sendSET, changeTable, sendBadCommunity;
-	private CardLayout cardLayout;
-	
+	private CardLayout cardLayout = new CardLayout();
 	
 	private JTable totalTable, currentTable;
 	private DefaultTableModel modelTotal, modelCurrent;
 	private JComboBox<String> routerSelection;
 	
-	SNMPStats stats;
+	private SNMPManager manager;
+	private Date lastUpdateTime;
+	private SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss");
+	private int seconds = 2;
 	
 	
 	private long oldValues[][], latestValues[][];
@@ -32,9 +37,9 @@ public class GUI extends Thread {
 		frame = new JFrame("SNMP Monitor");
 		bottomPanel = new Panel(new FlowLayout());
 		centerPanel = new Panel();
-		cardLayout = new CardLayout();
 		
-		stats = new SNMPStats("192.168.10.1", "192.168.20.1", "192.168.30.1");
+		
+		manager = new SNMPManager("192.168.10.1", "192.168.20.1", "192.168.30.1");
 		
 		oldValues = new long[3][6];
 		latestValues = new long[3][6];
@@ -53,8 +58,13 @@ public class GUI extends Thread {
 		setupCenterPanel();
 		setupBottomPanel();
 		
-		frame.add(bottomPanel, BorderLayout.SOUTH);
+		
+		FlowLayout fl = new FlowLayout();
+		fl.setVgap(40);
+		frame.setLayout(fl);
 		frame.add(centerPanel);
+		frame.add(bottomPanel);
+		
 		
 		this.start();
 		
@@ -67,43 +77,72 @@ public class GUI extends Thread {
 	private void setupCenterPanel() {
 		centerPanel.setLayout(cardLayout);
 		
-		Label currentLabel, totalLabel;
-		currentLabel = new Label ("current");
-		totalLabel = new Label("total");
+		Label totalLabel;
+		currentLabel = new Label ("Units/"+seconds+"s");
+		totalLabel = new Label("Total");
 		
 		
 		Panel total = new Panel();
 		Panel current = new Panel();
+		
 		total.add(totalTable);
 		current.add(currentTable);
 		total.add(totalLabel);
 		current.add(currentLabel);
 		
-		centerPanel.add(totalTable);
 		
-		centerPanel.add(currentTable);
+		
+		centerPanel.add(total);
+		centerPanel.add(current);
 		
 	}
 	
 	private void setupBottomPanel() {
 		String[] routers = {"R1", "R2", "R3"};
 		routerSelection = new JComboBox<String>(routers);
-		bottomPanel.add(routerSelection, BorderLayout.WEST);
+		bottomPanel.add(routerSelection);
+		
+		String[] time = {"2s", "5s", "10s"};
+		JComboBox<String> s = new JComboBox<String>(time);
 		
 		sendSET = new Button("Send SET");
 		changeTable = new Button("Change Table");
 		sendBadCommunity = new Button("Send Bad Community");
 		
+		lastUpdateTime = new Date(System.currentTimeMillis());
+		lastUpdate = new Label("Last update: " + df.format(lastUpdateTime));
+		
 		bottomPanel.add(sendSET);
 		bottomPanel.add(sendBadCommunity);
-		bottomPanel.add(changeTable, BorderLayout.EAST);
+		bottomPanel.add(changeTable);
+		bottomPanel.add(s);
+		bottomPanel.add(lastUpdate);
+		
+		s.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				switch(s.getSelectedIndex()) {
+				case 0:
+					seconds = 2;
+					currentLabel.setText("Units/"+seconds+"s");
+					break;
+				case 1:
+					seconds = 5;
+					currentLabel.setText("Units/"+seconds+"s");
+					break;
+				case 2:
+					seconds = 10;
+					currentLabel.setText("Units/"+seconds+"s");
+					break;
+				}
+			}
+		});
 		
 		sendBadCommunity.addActionListener((a) -> {
-			int r = routerSelection.getSelectedIndex() + 1;
 			try {
-				stats.sendBadCommunity(r);
+				manager.sendBadCommunity(routerSelection.getSelectedIndex() + 1);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			
@@ -115,9 +154,8 @@ public class GUI extends Thread {
 		});
 		
 		sendSET.addActionListener((a) -> {
-			int r = routerSelection.getSelectedIndex() + 1;
 			try {
-				stats.sendSET(r);
+				manager.sendSET(routerSelection.getSelectedIndex() + 1);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -141,7 +179,6 @@ public class GUI extends Thread {
 		
 	}
 	
-	
 	private void setupCurrentTable() {
 		currentTable.setRowHeight(30);
 		currentTable.setDefaultEditor(Object.class, null);
@@ -158,7 +195,6 @@ public class GUI extends Thread {
 		modelCurrent.setValueAt("BAD COMMUNITY", 0, 6);
 	}
 	
-	
 	public void run() {
 		try {
 			while(!isInterrupted()) {
@@ -167,14 +203,13 @@ public class GUI extends Thread {
 				
 				updateValuesCurrent();
 				
-				Thread.sleep(2000);
+				Thread.sleep(seconds*1000);
 			}
 		} catch (InterruptedException | IOException e) {
 			
 		}
 		
 	}
-	
 	
 	/*
 	 * This method pulls the data over SNMP via GET requests and stores it 
@@ -183,23 +218,24 @@ public class GUI extends Thread {
 	private void updateValuesTotal() throws IOException{
 		
 		for(int i = 1; i < 4; i++) {
-			modelTotal.setValueAt(stats.getINPackets(i).getFirstVarBind().getValue(), i, 1);
-			modelTotal.setValueAt(stats.getOUTPackets(i).getFirstVarBind().getValue(), i, 2);
+			modelTotal.setValueAt(manager.getINPackets(i).getFirstVarBind().getValue(), i, 1);
+			modelTotal.setValueAt(manager.getOUTPackets(i).getFirstVarBind().getValue(), i, 2);
 			
-			modelTotal.setValueAt(stats.getGETRequests(i).getFirstVarBind().getValue(), i, 3);
-			modelTotal.setValueAt(stats.getSETRequests(i).getFirstVarBind().getValue(), i, 4);
+			modelTotal.setValueAt(manager.getGETRequests(i).getFirstVarBind().getValue(), i, 3);
+			modelTotal.setValueAt(manager.getSETRequests(i).getFirstVarBind().getValue(), i, 4);
 			
-			modelTotal.setValueAt(stats.getNumTraps(i).getFirstVarBind().getValue(), i, 5);
-			modelTotal.setValueAt(stats.getNumBadCommunity(i).getFirstVarBind().getValue(), i, 6);
+			modelTotal.setValueAt(manager.getNumTraps(i).getFirstVarBind().getValue(), i, 5);
+			modelTotal.setValueAt(manager.getNumBadCommunity(i).getFirstVarBind().getValue(), i, 6);
 			
 			totalTable.repaint();
 		}
 		
 		for(int i = 0; i < 3; i++) {
 			for(int j = 0; j < 6; j++)
-				latestValues[i][j] = ((SnmpCounter32)modelTotal.getValueAt(i+1, j+1)).getValue();
-			
+				latestValues[i][j] = ((SnmpCounter32)modelTotal.getValueAt(i+1, j+1)).getValue();	
 		}
+		lastUpdateTime.setTime(System.currentTimeMillis());
+		lastUpdate.setText("Last update: " + df.format(lastUpdateTime));
 	}
 	
 	/*
@@ -210,15 +246,11 @@ public class GUI extends Thread {
 	private void updateValuesCurrent() throws IOException {
 		
 		for(int i = 0; i < 3; i++) {
-			for(int j = 0; j < 6; j++)
+			for(int j = 0; j < 6; j++) {
 				modelCurrent.setValueAt((latestValues[i][j] - oldValues[i][j]), i+1, j+1);
-			
-			currentTable.repaint();
-		}
-		
-		for(int i = 0; i < 3; i++)
-			for(int j = 0; j < 6; j++)
 				oldValues[i][j] = latestValues[i][j];
+			}
+			currentTable.repaint();
+		}		
 	}
-	
 }

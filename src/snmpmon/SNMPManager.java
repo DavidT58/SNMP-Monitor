@@ -4,15 +4,17 @@ import java.io.IOException;
 
 import com.ireasoning.protocol.snmp.*;
 
-
-public class SNMPStats {
+/*
+ * This class contains all the sessions and handles the communication with the routers
+ */
+public class SNMPManager {
 	
 	private SnmpSession sessionR1, sessionR2, sessionR3;
 	private SnmpTarget targetR1, targetR2, targetR3;
 	private int port;
 	private String ipR1, ipR2, ipR3, com;
 	
-	public SNMPStats(String ip1, String ip2, String ip3) throws IOException{
+	public SNMPManager(String ip1, String ip2, String ip3) throws IOException{
 		ipR1 = ip1;
 		ipR2 = ip2;
 		ipR3 = ip3;
