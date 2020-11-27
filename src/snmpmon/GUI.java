@@ -136,7 +136,7 @@ public class GUI extends Thread {
 		sendSET.addActionListener((a) -> {
 			int r = routerSelection.getSelectedIndex() + 1;
 			try {
-				stats.testSET(r);
+				stats.sendSET(r);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

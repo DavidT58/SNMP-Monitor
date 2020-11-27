@@ -138,7 +138,7 @@ public class SNMPManager {
 		return null;
 	}
 	
-	public void testSET(int router) throws IOException{
+	public void sendSET(int router) throws IOException{
 		SnmpVarBind a = null;
 		switch(router) {
 		case 1:
