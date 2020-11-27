@@ -4,6 +4,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 
@@ -19,12 +22,14 @@ public class GUI extends Thread {
 	private CardLayout cardLayout;
 	
 	
+	
 	private JTable totalTable, currentTable;
 	private DefaultTableModel modelTotal, modelCurrent;
 	private JComboBox<String> routerSelection;
 	
-	SNMPStats stats;
-	
+	private SNMPManager stats;
+	private Date lastUpdateTime;
+	private SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss");
 	
 	private long oldValues[][], latestValues[][];
 	
@@ -34,10 +39,12 @@ public class GUI extends Thread {
 		centerPanel = new Panel();
 		cardLayout = new CardLayout();
 		
-		stats = new SNMPStats("192.168.10.1", "192.168.20.1", "192.168.30.1");
+		stats = new SNMPManager("192.168.10.1", "192.168.20.1", "192.168.30.1");
 		
 		oldValues = new long[3][6];
 		latestValues = new long[3][6];
+		
+		
 		
 		// this model shows the overall total number of requests/traps/packets
 		modelTotal = new DefaultTableModel(4, 7); 
@@ -53,8 +60,11 @@ public class GUI extends Thread {
 		setupCenterPanel();
 		setupBottomPanel();
 		
-		frame.add(bottomPanel, BorderLayout.SOUTH);
+		FlowLayout fl = new FlowLayout();
+		fl.setVgap(40);
+		frame.setLayout(fl);
 		frame.add(centerPanel);
+		frame.add(bottomPanel);
 		
 		this.start();
 		
@@ -68,51 +78,60 @@ public class GUI extends Thread {
 		centerPanel.setLayout(cardLayout);
 		
 		Label currentLabel, totalLabel;
-		currentLabel = new Label ("current");
-		totalLabel = new Label("total");
+		currentLabel = new Label ("Units/10s");
+		totalLabel = new Label("Total");
 		
 		
 		Panel total = new Panel();
 		Panel current = new Panel();
-		total.add(totalTable);
-		current.add(currentTable);
+		
+		total.setBounds(0, 0, 600, 150);
+		
+		
 		total.add(totalLabel);
 		current.add(currentLabel);
+		total.add(totalTable);
+		current.add(currentTable);
 		
-		centerPanel.add(totalTable);
 		
-		centerPanel.add(currentTable);
+		centerPanel.add(total);
+		
+		centerPanel.add(current);
 		
 	}
 	
 	private void setupBottomPanel() {
 		String[] routers = {"R1", "R2", "R3"};
 		routerSelection = new JComboBox<String>(routers);
-		bottomPanel.add(routerSelection, BorderLayout.WEST);
+		bottomPanel.add(routerSelection);
 		
 		sendSET = new Button("Send SET");
 		changeTable = new Button("Change Table");
 		sendBadCommunity = new Button("Send Bad Community");
 		
+		
+		lastUpdateTime = new Date(System.currentTimeMillis());
+		lastUpdate = new Label("Last update: " + df.format(lastUpdateTime));
+		
+		
 		bottomPanel.add(sendSET);
 		bottomPanel.add(sendBadCommunity);
-		bottomPanel.add(changeTable, BorderLayout.EAST);
+		bottomPanel.add(changeTable);
+		bottomPanel.add(lastUpdate);
+		
 		
 		sendBadCommunity.addActionListener((a) -> {
 			int r = routerSelection.getSelectedIndex() + 1;
 			try {
 				stats.sendBadCommunity(r);
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
+				
 				e.printStackTrace();
 			}
 			
 		});
 		
-		changeTable.addActionListener((a) -> { 
-			cardLayout.next(centerPanel);
-			
-		});
+		changeTable.addActionListener((a) -> { cardLayout.next(centerPanel); });
 		
 		sendSET.addActionListener((a) -> {
 			int r = routerSelection.getSelectedIndex() + 1;
@@ -200,6 +219,9 @@ public class GUI extends Thread {
 				latestValues[i][j] = ((SnmpCounter32)modelTotal.getValueAt(i+1, j+1)).getValue();
 			
 		}
+		
+		lastUpdateTime.setTime(System.currentTimeMillis());
+		lastUpdate.setText("Last update: " + df.format(lastUpdateTime));
 	}
 	
 	/*
@@ -210,15 +232,11 @@ public class GUI extends Thread {
 	private void updateValuesCurrent() throws IOException {
 		
 		for(int i = 0; i < 3; i++) {
-			for(int j = 0; j < 6; j++)
+			for(int j = 0; j < 6; j++) {
 				modelCurrent.setValueAt((latestValues[i][j] - oldValues[i][j]), i+1, j+1);
-			
-			currentTable.repaint();
-		}
-		
-		for(int i = 0; i < 3; i++)
-			for(int j = 0; j < 6; j++)
 				oldValues[i][j] = latestValues[i][j];
+			}
+			currentTable.repaint();
+		}		
 	}
-	
 }
