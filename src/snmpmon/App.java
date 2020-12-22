@@ -14,7 +14,7 @@ import com.ireasoning.protocol.snmp.*;
 //import org.jfree.*;
 
 
-public class GUI extends Thread {
+public class App extends Thread {
 	private JFrame frame;
 	private Panel centerPanel, bottomPanel;
 	private Label lastUpdate, currentLabel;
@@ -33,7 +33,7 @@ public class GUI extends Thread {
 	
 	private long oldValues[][], latestValues[][];
 	
-	public GUI() throws IOException{
+	public App() throws IOException{
 		frame = new JFrame("SNMP Monitor");
 		bottomPanel = new Panel(new FlowLayout());
 		centerPanel = new Panel();

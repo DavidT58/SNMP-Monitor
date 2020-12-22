@@ -170,4 +170,8 @@ public class SNMPManager {
 		return null;
 	}
 	
+	//.1.3.6.1.2.1.15.10
+	//.1.3.6.1.2.1.15.13
+	
+	
 }
